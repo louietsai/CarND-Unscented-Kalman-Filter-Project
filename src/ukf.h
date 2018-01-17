@@ -16,6 +16,9 @@ public:
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
 
+  // previous timestamp
+  long long previous_timestamp_;
+
   ///* if this is false, laser measurements will be ignored (except for init)
   bool use_laser_;
 
@@ -24,12 +27,22 @@ public:
 
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   VectorXd x_;
-
   ///* state covariance matrix
   MatrixXd P_;
 
+  MatrixXd Xsig_aug_;
+
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
+
+  VectorXd x_pred_;
+  MatrixXd P_pred_;
+
+  ///* measurement space
+  // matrix for sigma points in measurement space
+  MatrixXd Zsig_;
+  VectorXd z_pred_;
+  MatrixXd S_;
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -67,6 +80,59 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  // Dimension of laser measurement space
+  int n_laser_;
+
+  // Dimension of radar measurement space
+  int n_radar_;
+
+  // Predicted state mean in radar measurement space
+  VectorXd z_pred_radar_;
+
+  // Utility variable for radar update
+  VectorXd deltaz_radar_;
+
+  // predicted sigma points in radar measurement space
+  MatrixXd Zsig_radar_;
+
+  // Radar measurement noise covariance matrix
+  MatrixXd R_radar_;
+
+  // Radar measurement covariance matrix
+  MatrixXd S_radar_;
+
+  // Cross correlation matrix for radar measurements
+  MatrixXd Tc_radar_;
+
+  // Kalman gain for radar measurements
+  MatrixXd K_radar_;
+
+  // Predicted state mean in lidar measurement space
+  VectorXd z_pred_laser_;
+
+  // Utility variable for lidar update
+  VectorXd deltaz_laser_;
+
+  // predicted sigma points in lidar measurement space
+  MatrixXd Zsig_laser_;
+
+  // Laser measurement noise covariance matrix
+  MatrixXd R_laser_;
+
+  // Laser measurement covariance matrix
+  MatrixXd S_laser_;
+
+  // Cross correlation matrix for laser measurements
+  MatrixXd Tc_laser_;
+
+  // Kalman gain for laser measurements
+  MatrixXd K_laser_;
+
+  VectorXd deltax_;
+
+  VectorXd x_diff;
+
+  VectorXd weights;
 
   /**
    * Constructor
@@ -77,6 +143,17 @@ public:
    * Destructor
    */
   virtual ~UKF();
+  void GenerateSigmaPoints(MatrixXd* Xsig_out);
+  void AugmentedSigmaPoints(MatrixXd* Xsig_out);
+  void SigmaPointPrediction(MatrixXd* Xsig_out,double delta_t);
+  void PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred);
+  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out);
+  void UpdateRadarState(VectorXd* x_out, MatrixXd* P_out,MeasurementPackage meas_package);
+  void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out);
+  void UpdateLidarState(VectorXd* x_out, MatrixXd* P_out,MeasurementPackage meas_package);
+
+  void debugInputValues(int testcase);
+  void assignedTestValues(int testcase);
 
   /**
    * ProcessMeasurement

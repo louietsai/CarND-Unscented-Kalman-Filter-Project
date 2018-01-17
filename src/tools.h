@@ -7,7 +7,20 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using namespace std;
 
-class Tools {
+class Tools 
+{
+
+  // Variables for running computation of root mean standard
+  // error using Kahan sum
+  VectorXd mse;
+  VectorXd lastmse;
+  VectorXd residual;
+  VectorXd kahanerror;
+  VectorXd rmse;
+
+  // Reset running root mean standard error calculation to zero
+  void resetRMSE();
+
 public:
   /**
   * Constructor.
