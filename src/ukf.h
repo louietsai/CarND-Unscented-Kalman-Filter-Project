@@ -12,6 +12,9 @@ using Eigen::VectorXd;
 
 class UKF {
 public:
+  // Output filestreams for radar and laser NIS
+  std::ofstream NISfile_radar_;
+  std::ofstream NISfile_laser_;
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
@@ -133,6 +136,10 @@ public:
   VectorXd x_diff;
 
   VectorXd weights;
+  // The project description mentioned that the following variables
+  // should appear in the header.
+  double NIS_radar_;
+  double NIS_laser_;
 
   /**
    * Constructor
