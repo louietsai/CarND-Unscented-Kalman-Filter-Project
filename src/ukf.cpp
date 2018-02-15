@@ -235,7 +235,7 @@ void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out) {
   }
 
   //print result
-  std::cout << std::endl<<"1. Xsig_aug = " << std::endl << Xsig_aug << std::endl;
+  //std::cout << std::endl<<"1. Xsig_aug = " << std::endl << Xsig_aug << std::endl;
 
   //write result
   *Xsig_out = Xsig_aug;
@@ -289,11 +289,11 @@ void UKF::SigmaPointPrediction(MatrixXd* Xsig_out,double delta_t) {
     double yawd_p = yawd;
 
     //add noise
-    px_p = px_p + 0.5*nu_a*delta_t*delta_t * cos(yaw);
-    py_p = py_p + 0.5*nu_a*delta_t*delta_t * sin(yaw);
+    px_p = px_p + 0.5f*nu_a*delta_t*delta_t * cos(yaw);
+    py_p = py_p + 0.5f*nu_a*delta_t*delta_t * sin(yaw);
     v_p = v_p + nu_a*delta_t;
 
-    yaw_p = yaw_p + 0.5*nu_yawdd*delta_t*delta_t;
+    yaw_p = yaw_p + 0.5*nu_yawdd*delta_t*delta_t + yawd * delta_t; //0215 ? new added +
     yawd_p = yawd_p + nu_yawdd*delta_t;
 
     //write predicted sigma point into right column
@@ -305,7 +305,7 @@ void UKF::SigmaPointPrediction(MatrixXd* Xsig_out,double delta_t) {
   }
 
   //print result
-  std::cout << std::endl<< "2. Xsig_pred = " << std::endl << Xsig_pred << std::endl;
+  //std::cout << std::endl<< "2. Xsig_pred = " << std::endl << Xsig_pred << std::endl;
 
   //write result
   *Xsig_out = Xsig_pred;
@@ -316,8 +316,8 @@ void UKF::SigmaPointPrediction(MatrixXd* Xsig_out,double delta_t) {
  * input :
  *      Xsig_pred_ , predicted sigma points matrix
  * output :
- *      x_pred_ , predicted state mean
- *      P_pred_ , predicted state covariance matrix
+ *      x_ , predicted state mean
+ *      P_ , predicted state covariance matrix
  */
 void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out) {
 
@@ -342,8 +342,8 @@ void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out) {
     x = x+ Xsig_pred_col;
   }
 
-  std::cout << std::endl<< "3.0.0 x : "<< x<< std::endl;
-  std::cout << std::endl<< "3.0.1 Xsig_pred_ : "<< Xsig_pred_<< std::endl;
+  //std::cout << std::endl<< "3.0.0 x : "<< x<< std::endl;
+  //std::cout << std::endl<< "3.0.1 Xsig_pred_ : "<< Xsig_pred_<< std::endl;
   //std::cout<<"into PredictMeanAndCovariance 1"<<std::endl;
   //predicted state covariance matrix
   P.fill(0.0);
@@ -354,43 +354,12 @@ void UKF::PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out) {
     VectorXd x_diff = Xsig_pred_.col(i) - x;
     //angle normalization
     //std::cout<<"into PredictMeanAndCovariance 3 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    double divider = 0;
-    while (x_diff(3)> M_PI){
-        if (divider == 0){
-                divider =round( (double)(x_diff(3) / (2*M_PI)));
-                x_diff(3)= x_diff(3) - (divider)*(2*M_PI);
-                //std::cout<<"into PredictMeanAndCovariance 3.1 i:"<< i << " x_diff(3) :" << x_diff(3)<< "divider:"<<divider<<std::endl;
-                divider = -1;
-        }
-        else
-                x_diff(3)-=2.*M_PI;
-        //std::cout<<"into PredictMeanAndCovariance 3.2 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    }
-    //std::cout<<"into PredictMeanAndCovariance 4 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    divider = 0;
-    while (x_diff(3)<-M_PI){
-        if (divider == 0){
-                divider = round((double)(x_diff(3) / (2*M_PI)));
-                x_diff(3)= x_diff(3) - (divider)*(2*M_PI);
-                //std::cout<<"into PredictMeanAndCovariance 4.1 i:"<< i << " x_diff(3) :" << x_diff(3)<< "divider:"<<divider<<std::endl;
-                divider = -1;
-        }
-        else
-            x_diff(3)+=2.*M_PI;
-        //std::cout<<"into PredictMeanAndCovariance 4.2 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    }
-    //std::cout<<"into PredictMeanAndCovariance 5 i:"<< i<<std::endl;
-
+    while (x_diff(3)> M_PI)  x_diff(3)-=2.*M_PI;
+    while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
     P = P + weights(i) * x_diff * x_diff.transpose() ;
     //std::cout<<"into PredictMeanAndCovariance 6 i:"<< i<<std::endl;
     std::cout << std::endl<< "3.0 x_diff : "<< x_diff<< std::endl;
   }
-
-  //print result
-  std::cout << std::endl<< "3.1 Predicted state" << std::endl;
-  std::cout << x << std::endl;
-  std::cout << std::endl<< "3.2 Predicted covariance matrix" << std::endl;
-  std::cout << P << std::endl;
 
   //write result
   *x_out = x;
@@ -546,7 +515,7 @@ void UKF::assignedTestValues(int testcase)
  *      z_pred_ , mean predicted measurement
  *      Zsig_ , measurement sigma point matrix
  *      Xsig_pred_ , predicted sigma points matrix
- *      x_pred_ , predicted state mean
+ *      x_ , predicted state mean
  * output :
  *      x_ , state vector
  *      P_ , state covariance matrix
@@ -598,38 +567,12 @@ void UKF::UpdateRadarState(VectorXd* x_out, MatrixXd* P_out,MeasurementPackage m
     uint max_count = 1000000; //PROBLEM
     //while ((x_diff(3)> M_PI)) {x_diff(1)-=2.*M_PI; count++; if(count < max_count){count=0;break;}}
     //while ((x_diff(3)<-M_PI)) {x_diff(1)+=2.*M_PI; count++; if(count < max_count){count=0;break;}}
-    //while ((x_diff(3)> M_PI)) {x_diff(3)-=2.*M_PI;}
-    //while ((x_diff(3)<-M_PI)) {x_diff(3)+=2.*M_PI;}
-    double divider = 0;
-    while (x_diff(3)> M_PI){
-        if (divider == 0){
-                divider =round( (double)(x_diff(3) / (2*M_PI)));
-                x_diff(3)= x_diff(3) - (divider)*(2*M_PI);
-                //std::cout<<"into PredictMeanAndCovariance 3.1 i:"<< i << " x_diff(3) :" << x_diff(3)<< "divider:"<<divider<<std::endl;
-                divider = -1;
-        }
-        else
-                x_diff(3)-=2.*M_PI;
-        //std::cout<<"into PredictMeanAndCovariance 3.2 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    }
-    //std::cout<<"into PredictMeanAndCovariance 4 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    divider = 0;
-    while (x_diff(3)<-M_PI){
-        if (divider == 0){
-                divider = round((double)(x_diff(3) / (2*M_PI)));
-                x_diff(3)= x_diff(3) - (divider)*(2*M_PI);
-                //std::cout<<"into PredictMeanAndCovariance 4.1 i:"<< i << " x_diff(3) :" << x_diff(3)<< "divider:"<<divider<<std::endl;
-                divider = -1;
-        }
-        else
-            x_diff(3)+=2.*M_PI;
-        //std::cout<<"into PredictMeanAndCovariance 4.2 i:"<< i << " x_diff(3) :" << x_diff(3)<<std::endl;
-    }
-
+    while ((x_diff(3)> M_PI)) {x_diff(3)-=2.*M_PI;}
+    while ((x_diff(3)<-M_PI)) {x_diff(3)+=2.*M_PI;}
     Tc_radar_ = Tc_radar_ + weights(i) * x_diff * deltaz_radar_.transpose();
   }
 
-  //std::cout << "Tc_radar_ : " << std::endl << Tc_radar_ << std::endl<<"S_radar_ : "<<std::endl<<S_radar_ << std::endl<<"S_radar_.inverse : "<<std::endl<<S_radar_.inverse() << std::endl;
+  std::cout << "Tc_radar_ : " << std::endl << Tc_radar_ << std::endl<<"S_radar_ : "<<std::endl<<S_radar_ << std::endl<<"S_radar_.inverse : "<<std::endl<<S_radar_.inverse() << std::endl;
   //Kalman gain K;
   K_radar_ = Tc_radar_ * S_radar_.inverse();
 
@@ -725,7 +668,7 @@ void UKF::PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out) {
  *      z_pred_ , mean predicted measurement
  *      Zsig_ , measurement sigma point matrix
  *      Xsig_pred_ , predicted sigma points matrix
- *      x_pred_ , predicted state mean
+ *      x_ , predicted state mean
  * output :
  *      x_ , state vector
  *      P_ , state covariance matrix
@@ -807,8 +750,18 @@ fy the state
   //GenerateSigmaPoints(&Xsig);
 
   AugmentedSigmaPoints(&Xsig_aug_);
+  std::cout << std::endl<<"1. Xsig_aug = " << std::endl << Xsig_aug_ << std::endl;
+
   SigmaPointPrediction(&Xsig_pred_,delta_t);
-  PredictMeanAndCovariance(&x_pred_, &P_pred_);
+  std::cout << std::endl<< "2. Xsig_pred = " << std::endl << Xsig_pred_ << std::endl;
+
+  PredictMeanAndCovariance(&x_, &P_); //0215 FIX ISSUE. should pass predicted values to current x and P
+                                      //                so update functions can
+                                      //                use this predicted  values
+  std::cout << std::endl<< "3.1 Predicted state" << std::endl;
+  std::cout << x_ << std::endl;
+  std::cout << std::endl<< "3.2 Predicted covariance matrix" << std::endl;
+  std::cout << P_ << std::endl;
 }
 
 /**
@@ -913,9 +866,6 @@ void UKF::ProcessMeasurement(MeasurementPackage measurement_pack) {
     //Xsig_aug_ = MatrixXd(7, 15);
 
     //Xsig_pred_ = MatrixXd(15, 5);
-
-    x_pred_ = VectorXd(5);
-    P_pred_ = MatrixXd(5, 5);
 
     Zsig_ = MatrixXd(n_z, 2 * n_aug + 1);
     z_pred_ = VectorXd(3);
