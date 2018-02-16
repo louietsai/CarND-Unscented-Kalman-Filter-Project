@@ -5,7 +5,7 @@
 Self-Driving Car Engineer Nanodegree Program
 
 In this project utilize an Unscented Kalman Filter to estimate the state of a moving object of interest with noisy lidar and radar measurements. Passing the project requires obtaining RMSE values that are lower that the tolerance outlined in the project rubric. 
-
+I used "constant turn rate and velocity magnitude" (CTRV) process model to carry out the Kalman filter's predict steps.
 here is the final RMSE value after processing all the sensor data.
 ![RMSE][RMSE]
 
