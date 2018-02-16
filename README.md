@@ -1,5 +1,5 @@
 [//]: # (Image References) 
-[RMSE]: ./NIS/RMSE.pngg
+[RMSE]: ./NIS/RMSE.png
 [NIS]: ./NIS/NIS.png
 # Unscented Kalman Filter Project Starter Code
 Self-Driving Car Engineer Nanodegree Program
